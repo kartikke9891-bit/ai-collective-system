@@ -1,0 +1,30 @@
+{
+  "name": "ai-collective-system",
+  "version": "1.0.0",
+  "description": "Self-Optimizing Collective Pipeline - 4 Node Master Control System",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "install-all": "pnpm install",
+    "sync:collective": "node collective/scripts/sync-global-config.js",
+    "command:propagate": "node collective/scripts/command-propagation.js",
+    "audit:collective": "node collective/scripts/cross-node-audit.js",
+    "repair:auto": "node collective/scripts/auto-repair-engine.js",
+    "health:check": "node collective/scripts/health-check.js",
+    "deploy:cascade": "node collective/scripts/cascade-deploy.js",
+    "dev": "pnpm -r run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "format": "pnpm -r run format"
+  },
+  "devDependencies": {
+    "pnpm": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
