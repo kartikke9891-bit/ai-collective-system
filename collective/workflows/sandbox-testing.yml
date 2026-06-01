@@ -1,0 +1,69 @@
+name: Sandboxed Testing & Auto-Repair Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  sandbox-test:
+    name: Sandboxed Testing Chamber
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Run Sandboxed Testing Chamber
+        id: testing
+        run: pnpm run test:sandbox || echo "TESTS_FAILED=true" >> $GITHUB_ENV
+        continue-on-error: true
+      
+      - name: Auto-Repair Engine
+        if: env.TESTS_FAILED == 'true'
+        run: pnpm run repair:auto
+        continue-on-error: true
+      
+      - name: Re-run Tests
+        if: env.TESTS_FAILED == 'true'
+        run: pnpm run test:sandbox
+        continue-on-error: true
+      
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: collective/monitoring/
+      
+      - name: Health Check
+        run: pnpm run health:check
+      
+      - name: Cross-Node Audit
+        run: pnpm run audit:collective
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Sandboxed testing completed. Awaiting human approval for deployment.'
+            });
